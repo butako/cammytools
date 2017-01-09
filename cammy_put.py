@@ -72,7 +72,7 @@ def resize_image(imagedir, imagefname, targetfile):
 	infile = os.path.join(imagedir, imagefname)
 	im = Image.open(infile)
 	im.thumbnail( (2000,720) )
-	im.save(targetfile, "JPEG", quality = 70)
+	im.save(targetfile, "JPEG", quality = 60)
 	logging.info('Resizing {} to {}'.format(infile, targetfile.name))
 
 def get_images(image_dir):
@@ -192,6 +192,7 @@ def main():
 	parser.add_argument('--resize', help='Resize images before sending to cammy', action='store_true', default=False)
 	parser.add_argument('--archivedir', help='Archive directory', default=None)
 	parser.add_argument('--archivedays', help='Number of days of history to keep in archive', default=10)
+	parser.add_argument('--retrytimeout', help='How many minutes to keep waiting to grab pid lock for sending files', default=5)
 
 
 	args = parser.parse_args()
@@ -209,10 +210,19 @@ def main():
 	rootLogger.setLevel(logging.DEBUG)
 
 	logging.info('CammyPut started.')
-	if is_running(args.pidfile):
-		logging.warning("CammyPut is already running. Skipping.")
-		return
 
+	retrycount = 0
+	retryinterval = 10
+	maxretry = (args.retrytimeout * 60) / retryinterval
+	while retrycount < maxretry:
+		if not is_running(args.pidfile):
+			break
+		logging.warning("CammyPut is already running. Retry {} of {}".format(retrycount, maxretry))
+		retrycount += 1
+		time.sleep(retryinterval)
+	else:
+		logging.warning("CammyPut retry limit exceeded. Giving up after {} of {}".format(retrycount, maxretry))
+		return
 
 
 	more = True
