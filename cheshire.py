@@ -163,8 +163,8 @@ def main():
 	rootLogger.setLevel(logging.INFO)
 	GPIO.setmode(GPIO.BCM)
 
-	catFlapChannel = 3
-	GPIO.setup(catFlapChannel, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+	catFlapChannel = 21
+	GPIO.setup(catFlapChannel, GPIO.IN)
 
 	GPIO.add_event_detect(catFlapChannel, GPIO.FALLING, callback=onCatFlapTriggered_debouncer, bouncetime=300)
 	
